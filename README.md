@@ -1,5 +1,9 @@
 # 云上星台——二十八星宿秘境 · 交互式 3D 场景
 
+[![在线演示](https://img.shields.io/badge/在线演示-打开场景-b28a52?style=flat-square)](https://zzx20051016-lang.github.io/star-terrace-3d/)
+[![部署](https://img.shields.io/github/actions/workflow/status/zzx20051016-lang/star-terrace-3d/pages.yml?style=flat-square&label=Pages)](https://github.com/zzx20051016-lang/star-terrace-3d/actions/workflows/pages.yml)
+[![License](https://img.shields.io/badge/license-MIT-182134?style=flat-square)](LICENSE)
+
 单文件 Three.js 幻想场景：一座浮在云海之上的古山岛，正中是阶梯式青铜浑仪观星台，四周是按艺术化方位划分的四组院落（东青龙、北玄武、西白虎、南朱雀），每院落 7 座星宿碑，共 28 枚。白天／夜晚双模式平滑过渡，可旋转、缩放、重置视角，点击碑牌弹出对应宿位的说明卡。
 
 ![白天全景](docs/01-day.jpg)
@@ -195,5 +199,16 @@ node scripts/check.mjs --url "http://127.0.0.1:8177/" --out previews/custom --mo
 ## 10. 许可
 
 - 项目代码：MIT，见 [LICENSE](LICENSE)。
-- 资源：零外部资源（无图、无模型、无字体下载、无第三方纹理）。
+- 内置 Three.js 0.164.1：MIT，版权归 three.js authors。
+- 资源：零外部图片 / 模型 / 字体，所有纹理与几何由代码生成。
 - 文本知识边界：参见本文开头的「艺术化场景」声明与碑牌卡片文案。
+
+## 11. 部署
+
+站点由 GitHub Actions 自动发布，无需手动构建：
+
+1. 推送到 `main` 分支；
+2. `.github/workflows/pages.yml` 组装 `index.html` + `vendor/` + `docs/`，写入 `.nojekyll`；
+3. 发布到 <https://zzx20051016-lang.github.io/star-terrace-3d/>。
+
+> 首次部署需要在仓库 **Settings → Pages → Build and deployment → Source** 选择 **GitHub Actions**。本仓库已完成该配置，后续 push 即自动更新。
