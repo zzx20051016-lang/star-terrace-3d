@@ -13,7 +13,9 @@
 
 ## 1. 启动
 
-需要 Node.js 18+，首次启动需要网络（CDN 拉取 Three.js 0.164.1 + OrbitControls）。
+**在线访问**：<https://zzx20051016-lang.github.io/star-terrace-3d/>
+
+**本地运行**（无需联网，Three.js 已内置在 `vendor/`）：
 
 ```bash
 git clone https://github.com/zzx20051016-lang/star-terrace-3d.git
@@ -22,12 +24,11 @@ cd star-terrace-3d
 # 任选其一：
 node scripts/serve.mjs                    # 默认端口 8177
 node scripts/serve.mjs 8080               # 指定端口
-node scripts/serve.mjs 8080 ..            # 指定端口与静态根目录
 ```
 
-访问 `http://localhost:8177/`（或控制台输出的地址）。也可以直接用 `python -m http.server 8177` 等任意静态服务器，但**不要用 `file://` 直接打开**——ES Module 会被 CORS 拦截。
+访问 `http://localhost:8177/`。也可以直接用 `python -m http.server 8177` 等任意静态服务器，但**不要用 `file://` 直接打开**——ES Module 会被 CORS 拦截。
 
-> 只需看效果、不改代码的话，克隆后直接访问 `index.html` 即可，`index.html` 是已构建好的单文件，不依赖 `src/`。
+> 只需看效果、不改代码的话，`index.html` 是已构建好的单文件；`vendor/` 必须与它同级。
 
 ## 2. 交互
 
@@ -48,6 +49,7 @@ node scripts/serve.mjs 8080 ..            # 指定端口与静态根目录
 ```
 star-terrace-3d/
 ├── index.html                 # 构建产物（单文件，含全部 CSS + JS，可直接访问）
+├── vendor/three@0.164.1/      # 内置 Three.js（build + OrbitControls + BufferGeometryUtils），离线可用
 ├── docs/                      # README 配图（压缩后 JPG）
 ├── src/
 │   ├── template.html          # UI 骨架（导入映射、CSS、品牌栏、罗盘、提示、按钮、信息卡）
@@ -123,11 +125,13 @@ star-terrace-3d/
 
 ## 5. 技术要点
 
-- **单文件交付**：`scripts/build.mjs` 把 `src/template.html` 与 12 个模块按序拼接，`index.html` 自包含全部 CSS 与 JS（约 203 KB），仅 Three.js 与 OrbitControls 走 CDN。
+- **单文件交付**：`scripts/build.mjs` 把 `src/template.html` 与 12 个模块按序拼接，`index.html` 自包含全部 CSS 与 JS（约 203 KB）。
+- **完全离线**：Three.js 0.164.1 内置在 `vendor/`，通过 importmap 以相对路径引入，不依赖任何 CDN。已在断网条件下实测可启动（见 §8）。
 - **零外部资源**：所有纹理由 `CanvasTexture` 现场绘制，所有几何由代码生成；中文使用系统字体，无字体下载。
 - **确定性**：固定随机种子 `0x5eed2a17` + `rngFor(salt)` 独立随机流，新增装饰不会打乱既有布局，刷新后场景完全一致。
 - **材质扩展**：`onBeforeCompile` 注入世界空间 fbm 噪声（色斑 / 岩层 / 湿润 / 颗粒粗糙 / 闪点）与顶点风动，不增加额外 draw call。
 - **性能取舍**：`InstancedMesh` 承载草叶、灌木、松针、竹叶、萤火虫；`pixelRatio` 上限 1.75；运行中按帧率自动降级。
+- **自动部署**：`.github/workflows/pages.yml` 在每次 push 到 `main` 时组装站点并发布到 GitHub Pages。
 
 ## 6. 已知视觉局限（三项主要）
 
@@ -151,9 +155,24 @@ star-terrace-3d/
 
 ## 8. 验证说明
 
-- `scripts/check.mjs` 通过 CDP 驱动无头 Chrome（swiftshader 后端）做 BOOT、截图、点击、夜间切换、重置、旋转、窄屏共 6 项检查。**已实际运行**：BOOT ready、28 mansions、CARD TEXT 完整、night/reset/rotated/narrow 通过、控制台干净。
-- 注意 swiftshader 报告的 fps 仅为 0~1，**不可作为真实性能指标**；真实性能需在用户本地浏览器中评估。
-- 视觉评估仅看自动截图；**未在本地交互式运行时评估拖拽手感**。
+以下检查均通过无头 Chrome（CDP 驱动）实际执行，不是估计值。
+
+**功能检查**（`scripts/check.mjs`，6 项）：
+
+| 项 | 结果 |
+|---|---|
+| 启动 | `ready: true`，`fatal: false` |
+| 宿数 | 28 / 28，四组各七 |
+| 信息卡 | 点击「角」→ 文本完整（宿名 / 四象 / 拼音 / 方位 / 场景位置 / 说明） |
+| 昼夜切换 | 通过 |
+| 重置视角 | 通过 |
+| 旋转视角 | 通过 |
+| 窄屏 430×860 | 无溢出 |
+| 控制台 | 无报错、无失败请求 |
+
+**离线检查**（`scripts/check-offline.mjs`）：在 CDP 层拦截全部非本机请求后重新加载，结果 `ready: true`、外部请求 0、失败请求 0 —— 完全断网可运行。
+
+**未验证的部分**：无头 swiftshader 报告的 fps 仅为 0~1，**不能代表真实性能**；真实帧率与拖拽手感需在本地浏览器中评估。
 
 ## 9. 重做与修改
 

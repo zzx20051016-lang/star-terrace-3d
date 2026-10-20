@@ -397,21 +397,21 @@ body.is-night #vignette{opacity:1}
 <div id="fatal" hidden>
   <h2>场景未能启动</h2>
   <p class="msg" id="fatal-msg"></p>
-  <p>本页需要浏览器支持 WebGL 2，并通过 CDN 加载 Three.js 0.164.1。首次运行需要联网。</p>
+  <p>本页需要浏览器支持 WebGL 2，并加载 Three.js 0.164.1。仓库内已内置该库（<code>vendor/</code>），无需联网即可运行。</p>
   <button class="btn" type="button" onclick="location.reload()">重新载入</button>
 </div>
 
 <script type="importmap">
 {
   "imports": {
-    "three": "https://unpkg.com/three@0.164.1/build/three.module.js",
-    "three/addons/": "https://unpkg.com/three@0.164.1/examples/jsm/"
+    "three": "./vendor/three@0.164.1/build/three.module.js",
+    "three/addons/": "./vendor/three@0.164.1/examples/jsm/"
   }
 }
 </script>
 
 <script>
-  // CDN / 模块加载失败时给出可读提示（模块本身若解析失败不会执行）
+  // 模块加载失败时给出可读提示（模块本身若解析失败不会执行）
   window.__BOOT__ = false;
   window.__showFatal = function (msg) {
     if (window.__BOOT__ || window.__READY__) return;
@@ -424,7 +424,7 @@ body.is-night #vignette{opacity:1}
   };
   window.__bootTimer = setTimeout(function () {
     if (!window.__BOOT__ && !window.__READY__) {
-      window.__showFatal('Three.js 未能加载。请检查网络连接，或稍后刷新重试。');
+      window.__showFatal('Three.js 未能加载。请确认 vendor/three@0.164.1/ 目录与 index.html 同级，或检查网络。');
     }
   }, 18000);
   window.__clearBootTimer = function () {

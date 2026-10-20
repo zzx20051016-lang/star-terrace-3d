@@ -11,6 +11,9 @@ node_modules/
 # 检查过程截图（原始 PNG 体积大；README 使用的压缩图在 docs/ 下）
 previews/
 
+# Pages 构建产物
+_site/
+
 # 编辑器 / 系统
 .vscode/
 .idea/
