@@ -15,15 +15,19 @@
 
 需要 Node.js 18+，首次启动需要网络（CDN 拉取 Three.js 0.164.1 + OrbitControls）。
 
-```powershell
-cd F:\毕设\二十八星宿科普\cloud-terrace
+```bash
+git clone https://github.com/zzx20051016-lang/star-terrace-3d.git
+cd star-terrace-3d
 
 # 任选其一：
-node scripts/serve.mjs 8177               # 默认端口 8177
-node scripts/serve.mjs 8177 F:\其他路径   # 指定端口或服务根目录
+node scripts/serve.mjs                    # 默认端口 8177
+node scripts/serve.mjs 8080               # 指定端口
+node scripts/serve.mjs 8080 ..            # 指定端口与静态根目录
 ```
 
-访问 `http://localhost:8177/`（或控制台输出的地址）。也可直接用 `python -m http.server` 之类静态服务，但不要用 `file://` 打开——会触发 CORS/模块加载问题。
+访问 `http://localhost:8177/`（或控制台输出的地址）。也可以直接用 `python -m http.server 8177` 等任意静态服务器，但**不要用 `file://` 直接打开**——ES Module 会被 CORS 拦截。
+
+> 只需看效果、不改代码的话，克隆后直接访问 `index.html` 即可，`index.html` 是已构建好的单文件，不依赖 `src/`。
 
 ## 2. 交互
 
@@ -42,8 +46,9 @@ node scripts/serve.mjs 8177 F:\其他路径   # 指定端口或服务根目录
 ## 3. 工程结构
 
 ```
-cloud-terrace/
-├── index.html                 # 构建产物（单文件，含全部 CSS + JS）
+star-terrace-3d/
+├── index.html                 # 构建产物（单文件，含全部 CSS + JS，可直接访问）
+├── docs/                      # README 配图（压缩后 JPG）
 ├── src/
 │   ├── template.html          # UI 骨架（导入映射、CSS、品牌栏、罗盘、提示、按钮、信息卡）
 │   └── js/
@@ -63,7 +68,7 @@ cloud-terrace/
 │   ├── build.mjs              # 把 src/template.html + src/js/*.js 拼成 index.html
 │   ├── serve.mjs              # 静态服务器
 │   └── check.mjs              # 无头 Chrome (CDP) 自动化检查：BOOT / 截图 / 点击 / 切夜 / 重置 / 旋转 / 窄屏
-└── previews/                  # 自动检查截图
+└── previews/                  # 自动检查截图（本地生成，未纳入版本控制）
 ```
 
 `★ Insight ─────────────────────────────────────`
@@ -116,6 +121,14 @@ cloud-terrace/
 - `DAY` / `NIGHT` 两个参数对象，`setNightTarget(on)` 在 2.5 秒内用 `lerp` 插值。
 - 影响：天空顶/中/地三色、雾色与密度、key/fill/hemi/ambient 四光强与色温、自发光材质（`APP.emissiveMats`）、灯笼 sprite 不透明度、青苔/窗格/铜鼎自发光、星空透明度、云海色调与不透明度、瀑布雾、远山、水渠色温。
 
+## 5. 技术要点
+
+- **单文件交付**：`scripts/build.mjs` 把 `src/template.html` 与 12 个模块按序拼接，`index.html` 自包含全部 CSS 与 JS（约 203 KB），仅 Three.js 与 OrbitControls 走 CDN。
+- **零外部资源**：所有纹理由 `CanvasTexture` 现场绘制，所有几何由代码生成；中文使用系统字体，无字体下载。
+- **确定性**：固定随机种子 `0x5eed2a17` + `rngFor(salt)` 独立随机流，新增装饰不会打乱既有布局，刷新后场景完全一致。
+- **材质扩展**：`onBeforeCompile` 注入世界空间 fbm 噪声（色斑 / 岩层 / 湿润 / 颗粒粗糙 / 闪点）与顶点风动，不增加额外 draw call。
+- **性能取舍**：`InstancedMesh` 承载草叶、灌木、松针、竹叶、萤火虫；`pixelRatio` 上限 1.75；运行中按帧率自动降级。
+
 ## 6. 已知视觉局限（三项主要）
 
 | # | 局限 | 现象 | 影响 |
@@ -140,28 +153,28 @@ cloud-terrace/
 
 - `scripts/check.mjs` 通过 CDP 驱动无头 Chrome（swiftshader 后端）做 BOOT、截图、点击、夜间切换、重置、旋转、窄屏共 6 项检查。**已实际运行**：BOOT ready、28 mansions、CARD TEXT 完整、night/reset/rotated/narrow 通过、控制台干净。
 - 注意 swiftshader 报告的 fps 仅为 0~1，**不可作为真实性能指标**；真实性能需在用户本地浏览器中评估。
-- 视觉评估仅看 `previews/check15/*.png` 等自动截图；**未在本地交互式运行时评估拖拽手感**。
+- 视觉评估仅看自动截图；**未在本地交互式运行时评估拖拽手感**。
 
 ## 9. 重做与修改
 
 - 仅修改 `src/js/*.js` 后跑：
 
-```powershell
+```bash
 node scripts/build.mjs
 ```
 
-`index.html` 即被重建；无需修改 `src/template.html`（CSS / UI 都在那里）。
+`index.html` 即被重建；UI / CSS 在 `src/template.html`。
 
 - 调试相机：`http://localhost:8177/?cam=78,16,108&target=0,-6,0&fov=42` 直接覆盖初始视角。
 - 检查截图：
 
-```powershell
+```bash
 node scripts/check.mjs --url "http://127.0.0.1:8177/" --out previews/custom --width 1600 --height 900
-node scripts/check.mjs --url "http://127.0.0.1:8177/" --out previews/custom --width 1600 --height 900 --mode one   # 仅一张
+node scripts/check.mjs --url "http://127.0.0.1:8177/" --out previews/custom --mode one   # 仅截一张
 ```
 
 ## 10. 许可
 
-- 项目代码：MIT。
+- 项目代码：MIT，见 [LICENSE](LICENSE)。
 - 资源：零外部资源（无图、无模型、无字体下载、无第三方纹理）。
-- 文本知识边界：参见 README 中"艺术化场景"声明与碑文卡片文案。
+- 文本知识边界：参见本文开头的「艺术化场景」声明与碑牌卡片文案。
