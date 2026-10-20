@@ -1,0 +1,19 @@
+# 依赖 / 构建缓存
+node_modules/
+.cache/
+*.log
+
+# 自动检查用的临时 Chrome 用户目录（体积大，且含本机路径）
+.chrome-check-profile/
+.chrome-*/
+**/.chrome-*/
+
+# 检查过程截图（原始 PNG 体积大；README 使用的压缩图在 docs/ 下）
+previews/
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
